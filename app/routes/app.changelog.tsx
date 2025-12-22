@@ -124,7 +124,7 @@ export default function Changelog() {
         max-width: 100vw !important;
         margin-left: calc(-50vw + 50%) !important;
         margin-right: calc(-50vw + 50%) !important;
-        padding: 0 !important;
+        padding: 2rem !important;
         position: relative !important;
         left: 0 !important;
         right: 0 !important;
@@ -195,7 +195,7 @@ export default function Changelog() {
         style={{
           width: '100%',
           margin: 0,
-          padding: 0,
+          padding: '2rem',
           position: 'relative',
         }}
       ></div>
