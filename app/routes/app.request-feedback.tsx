@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useId, useMemo } from "react";
 import type { HeadersFunction, LoaderFunctionArgs } from "react-router";
 import { useLoaderData } from "react-router";
 import { useAppBridge } from "@shopify/app-bridge-react";
@@ -85,9 +85,12 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   };
 };
 
+const TARGET_CONTAINER_ID = "feedback-board-component";
+
 export default function RequestFeedback() {
   const { user } = useLoaderData<typeof loader>();
   const appBridge = useAppBridge();
+  const sessionKey = useId();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [appBridgeUser, setAppBridgeUser] = useState<any>(null);
 
@@ -107,44 +110,106 @@ export default function RequestFeedback() {
   }, [appBridge]);
 
   // Merge App Bridge user info if available
-  const displayUser = user.id && user.email ? user : (appBridgeUser ? {
-    id: appBridgeUser.id || null,
-    email: appBridgeUser.email || null,
-    firstName: appBridgeUser.firstName || null,
-    lastName: appBridgeUser.lastName || null,
-    fullName: `${appBridgeUser.firstName || ""} ${appBridgeUser.lastName || ""}`.trim() || null,
-    shop: user.shop || null,
-  } : user);
+  const displayUser = useMemo(() => {
+    return user.id && user.email ? user : (appBridgeUser ? {
+      id: appBridgeUser.id || null,
+      email: appBridgeUser.email || null,
+      firstName: appBridgeUser.firstName || null,
+      lastName: appBridgeUser.lastName || null,
+      fullName: `${appBridgeUser.firstName || ""} ${appBridgeUser.lastName || ""}`.trim() || null,
+      shop: user.shop || null,
+    } : user);
+  }, [user, appBridgeUser]);
+
+  // Load Features.Vote feedback board widget
+  useEffect(() => {
+    // Add CSS to make widget full width and break out of parent max-width constraints
+    const style = document.createElement("style");
+    style.textContent = `
+      s-page,
+      s-page > *,
+      s-page > * > * {
+        max-width: none !important;
+      }
+      #${TARGET_CONTAINER_ID} {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin-left: calc(-50vw + 50%) !important;
+        margin-right: calc(-50vw + 50%) !important;
+        padding: 0 !important;
+        position: relative !important;
+        left: 0 !important;
+        right: 0 !important;
+      }
+      #${TARGET_CONTAINER_ID} > * {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+    `;
+    document.head.appendChild(style);
+
+    // Check if script is already loaded
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if ((window as any).loadFeedbackBoard) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).loadFeedbackBoard(TARGET_CONTAINER_ID);
+      return;
+    }
+
+    // Create script element
+    const script = document.createElement("script");
+    script.src = `https://features.vote/widget/widget.js?sessionKey=${sessionKey}`;
+    script.async = true;
+
+    // Set widget parameters as data attributes
+    script.setAttribute("slug", "pulse"); // Update with your project slug
+    script.setAttribute("color_mode", "light"); // or "dark"
+    
+    // Pass user information if available
+    if (displayUser.id) {
+      script.setAttribute("user_id", displayUser.id);
+    }
+    if (displayUser.email) {
+      script.setAttribute("user_email", displayUser.email);
+    }
+    if (displayUser.fullName) {
+      script.setAttribute("user_name", displayUser.fullName);
+    }
+
+    // Load the widget when script loads
+    script.onload = () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).loadFeedbackBoard) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).loadFeedbackBoard(TARGET_CONTAINER_ID);
+      }
+    };
+
+    document.head.appendChild(script);
+
+    // Cleanup
+    return () => {
+      const existingScript = document.querySelector(
+        `script[src*="features.vote/widget/widget.js"]`
+      );
+      if (existingScript) {
+        existingScript.remove();
+      }
+      style.remove();
+    };
+  }, [sessionKey, displayUser]);
 
   return (
     <s-page heading="Request Feedback">
-      <s-section heading="Request Feedback">
-        <s-paragraph>
-          This is the Request Feedback page. Add your feedback request form here.
-        </s-paragraph>
-        <s-section heading="Current User">
-          <s-paragraph>
-            <s-text>User ID: {displayUser.id || "N/A"}</s-text>
-          </s-paragraph>
-          <s-paragraph>
-            <s-text>Email: {displayUser.email || "N/A"}</s-text>
-          </s-paragraph>
-          <s-paragraph>
-            <s-text>Name: {displayUser.fullName || "N/A"}</s-text>
-          </s-paragraph>
-          <s-paragraph>
-            <s-text>Shop: {displayUser.shop || "N/A"}</s-text>
-          </s-paragraph>
-          {!displayUser.id && (
-            <s-paragraph>
-              <s-text tone="warning">
-                Note: User information is not available. This may be because the app is using offline tokens. 
-                Try reinstalling the app after enabling online tokens.
-              </s-text>
-            </s-paragraph>
-          )}
-        </s-section>
-      </s-section>
+      <div 
+        id={TARGET_CONTAINER_ID}
+        style={{
+          width: '100%',
+          margin: 0,
+          padding: 0,
+          position: 'relative',
+        }}
+      ></div>
     </s-page>
   );
 }
