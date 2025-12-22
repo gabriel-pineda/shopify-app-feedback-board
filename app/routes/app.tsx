@@ -22,6 +22,7 @@ export default function App() {
         <s-link href="/app/user-info">User Info</s-link>
         <s-link href="/app/request-feedback">Request Feedback</s-link>
         <s-link href="/app/roadmap">Roadmap</s-link>
+        <s-link href="/app/changelog">Changelog</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>
