@@ -1,38 +1,89 @@
-# Shopify App Template - React Router
+# Shopify App Feedback Board
 
-This is a template for building a [Shopify app](https://shopify.dev/docs/apps/getting-started) using [React Router](https://reactrouter.com/).  It was forked from the [Shopify Remix app template](https://github.com/Shopify/shopify-app-template-remix) and converted to React Router.
+A Shopify App template demonstrating how to integrate **[Features.Vote](https://features.vote)** to add embedded feedback boards, feature voting, roadmaps, and changelogs directly into your Shopify App Admin.
 
-Rather than cloning this repo, follow the [Quick Start steps](https://github.com/Shopify/shopify-app-template-react-router#quick-start).
+[![Shopify App Feedback Board - Features.Vote Integration Guide](https://img.youtube.com/vi/wC7AFEv0vZs/maxresdefault.jpg)](https://youtu.be/wC7AFEv0vZs)
 
-Visit the [`shopify.dev` documentation](https://shopify.dev/docs/api/shopify-app-react-router) for more details on the React Router app package.
+## Overview
 
-## Upgrading from Remix
+This repository serves as a reference implementation for Shopify Developers looking to gather user feedback within their app. By integrating **Features.Vote**, you can collect feature requests, let merchants vote on priorities, and share your product roadmap—all without them leaving your app's dashboard.
 
-If you have an existing Remix app that you want to upgrade to React Router, please follow the [upgrade guide](https://github.com/Shopify/shopify-app-template-react-router/wiki/Upgrading-from-Remix).  Otherwise, please follow the quick start guide below.
+**Key Features:**
 
-## Quick start
+* **Embedded Feedback Board:** detailed view for submitting and browsing feature requests.
+* **Voting System:** simple upvote mechanism to prioritize development.
+* **Roadmap & Changelog:** keep users updated on what's coming and what's shipped.
+* **Seamless Integration:** uses the Shopify App Bridge to feel native to the admin.
 
-### Prerequisites
+### Platform & Guides
 
-Before you begin, you'll need the following:
+* **Platform:** [features.vote](https://features.vote)
+* **Shopify Use Cases:** [features.vote/use-cases/for-shopify-apps](https://features.vote/use-cases/for-shopify-apps)
+* **Integration Guide:** [features.vote/guides/shopify](https://features.vote/guides/shopify)
 
-1. **Node.js**: [Download and install](https://nodejs.org/en/download/) it if you haven't already.
-2. **Shopify Partner Account**: [Create an account](https://partners.shopify.com/signup) if you don't have one.
-3. **Test Store**: Set up either a [development store](https://help.shopify.com/en/partners/dashboard/development-stores#create-a-development-store) or a [Shopify Plus sandbox store](https://help.shopify.com/en/partners/dashboard/managing-stores/plus-sandbox-store) for testing your app.
-4. **Shopify CLI**: [Download and install](https://shopify.dev/docs/apps/tools/cli/getting-started) it if you haven't already.
-```shell
-npm install -g @shopify/cli@latest
+---
+
+## 📂 Highlighted Files
+
+When exploring the codebase, focus on these files to understand the integration:
+
+* **`app/routes/app.request-feedback.tsx`**
+  * **Purpose:** The feedback board page where users can submit and browse feature requests.
+  * **What to look for:** This is where the Features.Vote embed is configured. **Important:** Look for the slug `"pulse"` in the code (line 165) and replace it with your own project slug.
+
+* **`app/routes/app.roadmap.tsx`**
+  * **Purpose:** The roadmap page displaying planned features.
+  * **What to look for:** Features.Vote roadmap widget integration. **Important:** Replace the slug `"pulse"` (line 153) with your own project slug.
+
+* **`app/routes/app.changelog.tsx`**
+  * **Purpose:** The changelog page showing recently shipped features.
+  * **What to look for:** Features.Vote changelog widget integration. **Important:** Replace the slug `"pulse"` (line 153) with your own project slug.
+
+* **`app/shopify.server.ts`**
+  * **Purpose:** Server-side Shopify configuration.
+  * **What to look for:** Authentication and session handling to ensure the user viewing the board is a verified merchant.
+
+* **`app/root.tsx`**
+  * **Purpose:** The root layout file.
+  * **What to look for:** Script tags or global context providers that might be required to initialize the feedback widget.
+
+---
+
+## 🚀 How to Run
+
+This project is built using the **Shopify App React Router** template. Follow these steps to get it running locally:
+
+### 1. Prerequisites
+
+* [Node.js](https://nodejs.org/) (v20.19 or higher)
+* A [Shopify Partner Account](https://partners.shopify.com/)
+* A [Features.Vote](https://features.vote) account
+* [Shopify CLI](https://shopify.dev/docs/apps/tools/cli/getting-started) installed globally:
+  ```shell
+  npm install -g @shopify/cli@latest
+  ```
+
+### 2. Install Dependencies
+
+Clone the repository and install the required packages:
+
+```bash
+git clone https://github.com/gabriel-pineda/shopify-app-feedback-board.git
+cd shopify-app-feedback-board
+npm install
 ```
 
-### Setup
+### 3. Local Development & Live Preview
 
-```shell
-shopify app init --template=https://github.com/Shopify/shopify-app-template-react-router
+Start your local development server. This command will prompt you to log in to your Shopify Partner account, select a development store, and will generate a live preview link.
+
+```bash
+npm run dev
 ```
 
-### Local Development
+Or using the Shopify CLI directly:
 
-```shell
+```bash
 shopify app dev
 ```
 
@@ -40,47 +91,28 @@ Press P to open the URL to your app. Once you click install, you can start devel
 
 Local development is powered by [the Shopify CLI](https://shopify.dev/docs/apps/tools/cli). It logs into your partners account, connects to an app, provides environment variables, updates remote config, creates a tunnel and provides commands to generate extensions.
 
-### Authenticating and querying data
+### 4. Configuration (Important)
 
-To authenticate and query data you can use the `shopify` const that is exported from `/app/shopify.server.js`:
+Before deploying or finalizing your app, you must link it to your specific Features.Vote board:
 
-```js
-export async function loader({ request }) {
-  const { admin } = await shopify.authenticate.admin(request);
+1. Open **`app/routes/app.request-feedback.tsx`**.
+2. Search for the string `"pulse"` (around line 165).
+3. **Replace `"pulse"` with your own project slug** from Features.Vote (e.g., if your board is at `my-app.features.vote`, your slug is `my-app`).
+4. Repeat this process in **`app/routes/app.roadmap.tsx`** (line 153) and **`app/routes/app.changelog.tsx`** (line 153).
 
-  const response = await admin.graphql(`
-    {
-      products(first: 25) {
-        nodes {
-          title
-          description
-        }
-      }
-    }`);
+### 5. View the App
 
-  const {
-    data: {
-      products: { nodes },
-    },
-  } = await response.json();
+Open the URL provided in the terminal (usually a `https://admin.shopify.com/...` link) to see your app running in your development store with the feedback board active.
 
-  return nodes;
-}
-```
-
-This template comes pre-configured with examples of:
-
-1. Setting up your Shopify app in [/app/shopify.server.ts](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/shopify.server.ts)
-2. Querying data using Graphql. Please see: [/app/routes/app.\_index.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/app._index.tsx).
-3. Responding to webhooks. Please see [/app/routes/webhooks.tsx](https://github.com/Shopify/shopify-app-template-react-router/blob/main/app/routes/webhooks.app.uninstalled.tsx).
-
-Please read the [documentation for @shopify/shopify-app-react-router](https://shopify.dev/docs/api/shopify-app-react-router) to see what other API's are available.
+---
 
 ## Shopify Dev MCP
 
 This template is configured with the Shopify Dev MCP. This instructs [Cursor](https://cursor.com/), [GitHub Copilot](https://github.com/features/copilot) and [Claude Code](https://claude.com/product/claude-code) and [Google Gemini CLI](https://github.com/google-gemini/gemini-cli) to use the Shopify Dev MCP.  
 
-For more information on the Shopify Dev MCP please read [the  documentation](https://shopify.dev/docs/apps/build/devmcp).
+For more information on the Shopify Dev MCP please read [the documentation](https://shopify.dev/docs/apps/build/devmcp).
+
+---
 
 ## Deployment
 
@@ -91,7 +123,7 @@ The database is defined as a Prisma schema in `prisma/schema.prisma`.
 
 This use of SQLite works in production if your app runs as a single instance.
 The database that works best for you depends on the data your app needs and how it is queried.
-Here’s a short list of databases providers that provide a free tier to get started:
+Here's a short list of databases providers that provide a free tier to get started:
 
 | Database   | Type             | Hosters                                                                                                                                                                                                                               |
 | ---------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -135,6 +167,8 @@ When you're ready to set up your app in production, you can follow [our deployme
 
 When you reach the step for [setting up environment variables](https://shopify.dev/docs/apps/deployment/web#set-env-vars), you also need to set the variable `NODE_ENV=production`.
 
+---
+
 ## Gotchas / Troubleshooting
 
 ### Database tables don't exist
@@ -145,7 +179,11 @@ If you get an error like:
 The table `main.Session` does not exist in the current database.
 ```
 
-Create the database for Prisma. Run the `setup` script in `package.json` using `npm`, `yarn` or `pnpm`.
+Create the database for Prisma. Run the `setup` script in `package.json` using `npm`, `yarn` or `pnpm`:
+
+```shell
+npm run setup
+```
 
 ### Navigating/redirecting breaks an embedded app
 
@@ -222,6 +260,8 @@ PRISMA_CLIENT_ENGINE_TYPE=binary
 
 This forces Prisma to use the binary engine mode, which runs the query engine as a separate process and can work via emulation on Windows ARM64.
 
+---
+
 ## Resources
 
 React Router:
@@ -237,6 +277,12 @@ Shopify:
 - [Polaris Web Components](https://shopify.dev/docs/api/app-home/polaris-web-components).
 - [App extensions](https://shopify.dev/docs/apps/app-extensions/list)
 - [Shopify Functions](https://shopify.dev/docs/api/functions)
+
+Features.Vote:
+
+- [Features.Vote Platform](https://features.vote)
+- [Shopify Integration Guide](https://features.vote/guides/shopify)
+- [Shopify Use Cases](https://features.vote/use-cases/for-shopify-apps)
 
 Internationalization:
 
